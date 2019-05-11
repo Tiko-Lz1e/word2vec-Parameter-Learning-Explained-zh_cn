@@ -12,7 +12,7 @@ Mikolov 等人的文章中的 word2vec 模型和应用在最近两年里吸引�
 
 ### 1.1 单词汇语境
 
-我们从 [Mikolov 等人的文章（2013a）](#R2)中介绍的最简单的连续词袋模型（CBOW）开始，我们假定在每个语境下只考虑一个词，这意味着给定一个上下文单词这个模型将预测一个目标单词，就像一个双词模型（bigram model）一样。建议刚开始了解神经网络的读者在进一步阅读之前，先读一下附录A来大致了解一下重要的概念和术语。
+我们从 [Mikolov 等人的文章（2013a）](#R2)中介绍的最简单的连续词袋模型（CBOW）开始，我们假定在每个语境下只需要考虑一个词，这意味着给定一个上下文单词这个模型将预测一个目标单词，就像一个双词模型（bigram model）一样。建议刚开始了解神经网络的读者在进一步阅读之前，先读一下附录A来大致了解一下重要的概念和术语。
 
 <center>
     <img style="border-radius: 0.3125em;
@@ -113,9 +113,63 @@ Mikolov 等人的文章中的 word2vec 模型和应用在最近两年里吸引�
 
 ## 2 Skip-Gram模型
 
+skip-gram模型在[Mikolov等人的文章](#R2)（[2013a](#R2)，[b](#R3)）中被介绍。插图3展示了这种模型。这种模型和CBOW模型是相反的。目标单词在这个模型中处在输入层，而上下文单词在输出层。
+
+我们仍然使用v<sub>w<sub>I</sub></sub>来表示输入层中唯一一个单词的输入向量，因此我们对于隐藏层输出h的定义与公式1中的定义一样，这意味着h就是简单复制了（并且转置了）输入层到隐藏层权重矩阵W中与w<sub>I</sub>有关的一行。我们将h的定义拷贝到下面：
+![公式24](./images/formula_24.png)
+
+在输出层中，我们输出C个多项式分布，而不是一个。每一个输出都是使用同一个隐藏层到输出层矩阵计算出来的：
+![公式25](./images/formula_25.png)
+这里的w<sub>c,j</sub>是输出层第c层面板上的第j和单词；w<sub>O,c</sub>是实际输出上下文单词中的第c个单词；w<sub>I</sub>是唯一的输入单词；y<sub>c,j</sub>是输出层第c层面板上第j个单元的输出。u<sub>c,j</sub>是输出层第c层面板上第j个单元的净输入。因为输出层的每一层面板共享同一组权重，因此
+![公式26](./images/formula_26.png)
+这里的v<sup>’</sup><sub>w<sub>j</sub></sub>是词汇表中第j个单词w<sub>j</sub>的输出向量，而且也是从隐藏层到输出层权重矩阵W’里某一行里得到的。
+
+<center>
+    <img style="border-radius: 0.3125em;
+    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
+    src="./images/Figures_3.png">
+    <br>
+    <div style="color:orange; border-bottom: 1px solid #d9d9d9;
+    display: inline-block;
+    color: #999;
+    padding: 1px;">插图3：skip-gram模型</div>
+</center>
+
+参数更新公式的推导和单词汇语境下的稍有不同。损失函数被替换为
+![公式27_28_29](./images/formula_27_28_29.png)
+这里j<sub>c</sub><sup>*</sup>是单词表中第c个实际输出上下文单词的索引。
+
+我们对输出层中每层面板上每个单元的净输出u<sub>c,j</sub>取E的导数得到
+![公式30](./images/formula_30.png)
+和公式8一样。这就是单元的预测误差。为了简化符号，我们定义一个V维向量EI = {EI<sub>1</sub>, ... , EI<sub>V</sub>}作为所有上下文单词的预测误差之和：
+![公式31](./images/formula_31.png)
+
+接下来，我们在隐藏层到输出层的矩阵W’上取E的导数，得到：
+![公式32](./images/formula_32.png)
+
+因此我们得到了隐藏层到输出层矩阵的更新公式W’，
+![公式33](./images/formula_33.png)
+或
+![公式34](./images/formula_34.png)
+对于这个更新公式的直观理解和公式11是一样的，除了预测误差是包含了输出层的所有上下文单词。注意我们需要对所有训练实例中隐藏层到输出层矩阵的每一个元素应用这个更新公式。
+
+对于从输入层到隐藏层矩阵的更新公式的推导与公式12到16相同，除了考虑到预测误差e<sub>j</sub>被替换为EI<sub>j</sub>。我们直接给出更新公式：
+![公式35](./images/formula_35.png)
+这里的EH是一个N维向量，其中的每个元素定义如下
+![公式36](./images/formula_36.png)
+对于公式35的直观理解和公式16是一样的。
+
+## 3 优化计算效率
+
+
+
+
+
 ## 文章中的注脚
 <span id="fn1">1、可以从这里查看这个演示: http://bit.ly/wevi-online.</span>
 
 ## 参考文献
 
 <span id="R2">Mikolov, T., Chen, K., Corrado, G., and Dean, J. (2013a). Efficient estimation of word representations in vector space. arXiv preprint arXiv:1301.3781.</span>
+
+<span id="R3">Mikolov, T., Sutskever, I., Chen, K., Corrado, G. S., and Dean, J. (2013b). Distributed representations of words and phrases and their compositionality. In Advances in Neural Information Processing Systems, pages 3111–3119.</span>
