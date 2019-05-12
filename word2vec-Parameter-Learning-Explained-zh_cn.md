@@ -161,6 +161,29 @@ skip-gram模型在[Mikolov等人的文章](#R2)（[2013a](#R2)，[b](#R3)）中�
 
 ## 3 优化计算效率
 
+目前为止，我们讨论过的模型（“bigram”模型，CBOW模型，和 skip-gram 模型）都是原始形式，没有使用任何的效率优化技巧。
+
+对于所有的这些模型，词汇表里的每个单词有两种向量表示：输入向量v<sub>w</sub>，输出向量v<sup>’</sup><sub>w</sub>。学习输入向量时不会很费力，但学习输出向量时的代价十分高昂。从更新公式22和23中，我们可以发现，对于每一个训练实例来说，为了更新v<sup>‘</sup><sub>w</sub>，我们需要遍历单词表中的每一个单词w<sub>j</sub>，计算出他们的净输入u<sub>j</sub>，预测概率y<sub>j</sub>（或是skip-gram模型里的y<sub>c,j</sub>），他们的预测误差e<sub>j</sub>（或是skip-gram模型里的EI<sub>j</sub>），最后还要用他们的预测误差来更新他们的输出向量v<sup>’</sup><sub>j</sub>。
+
+对每个训练实例里的所有单词进行这些运算的代价十分昂贵，这导致将我们的算法扩展到大型词汇表或是大型训练语料库是不切实际的。为了解决这个问题，一个直观的想法就是限制每一个训练实例里必须更新的输出向量的数量。实现这一目标的一个优雅的方式是分层softmax；另一个方式是抽样，我们将在下一个章节讨论这种方法。
+
+这两种方法都只优化了更新输出向量时的运算。在我们的推导中，我们关心三个值：（1）E，新的目标函数；（2）∂E/∂v<sup>’</sup><sub>w</sub>，输出向量新的更新公式；（3）∂E/∂h，用于反向传播来更新输入向量的预测误差的加权和
+
+### 3.1 分层softmax
+
+分层softmax是一种高效计算softmax的方法（[Morin and Bengio, 2005](#R5); [Mnih and Hinton, 2009](#R4)）。这个模型使用一个二叉树来表示词汇表里的所有单词。V个单词一定是树的叶子节点。可以证明，树中一定有V-1个内部节点。对于每一个叶子节点，存在唯一的一条从根到叶子节点的路径；这条路径用于估计该叶子节点表示的单词的概率。插图4是一个例子。
+
+<center>
+    <img style="border-radius: 0.3125em;
+    box-shadow: 0 2px 4px 0 rgba(34,36,38,.12),0 2px 10px 0 rgba(34,36,38,.08);" 
+    src="./images/Figures_4.png">
+    <br>
+    <div style="color:orange; border-bottom: 1px solid #d9d9d9;
+    display: inline-block;
+    color: #999;
+    padding: 1px;">插图4：一个分层softmax模型使用的二叉树的例子。白色的节点是单词表里的单词，黑色的节点是内部节点。一条从根节点到w2的示例路径被突出显示。在这个示例中，突出显示的路径长度L(w<sub>2</sub>) = 4。n(w, j)表示从根节点到单词w的路径中的第j个节点。</div>
+</center>
+
 
 
 
@@ -173,3 +196,7 @@ skip-gram模型在[Mikolov等人的文章](#R2)（[2013a](#R2)，[b](#R3)）中�
 <span id="R2">Mikolov, T., Chen, K., Corrado, G., and Dean, J. (2013a). Efficient estimation of word representations in vector space. arXiv preprint arXiv:1301.3781.</span>
 
 <span id="R3">Mikolov, T., Sutskever, I., Chen, K., Corrado, G. S., and Dean, J. (2013b). Distributed representations of words and phrases and their compositionality. In Advances in Neural Information Processing Systems, pages 3111–3119.</span>
+
+<span id="R4">Mnih, A. and Hinton, G. E. (2009). A scalable hierarchical distributed language model. In Koller, D., Schuurmans, D., Bengio, Y., and Bottou, L., editors, Advances in Neural Information Processing Systems 21, pages 1081–1088. Curran Associates, Inc.</span>
+
+<span id="R5">Morin, F. and Bengio, Y. (2005). Hierarchical probabilistic neural network language model. In AISTATS, volume 5, pages 246–252. Citeseer.</span>
